@@ -8,6 +8,7 @@ let dx = grid;
 let dy = 0;
 let food = { x: 320, y: 320 };
 let score = 0;
+let gameOver = false;
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
@@ -18,10 +19,24 @@ function resetFood() {
   food.y = getRandomInt(0, canvas.height / grid) * grid;
 }
 
+function showRestartButton() {
+  let btn = document.createElement('button');
+  btn.textContent = '재시작';
+  btn.id = 'restartBtn';
+  btn.style.marginTop = '20px';
+  btn.onclick = () => {
+    btn.remove();
+    restartGame();
+  };
+  document.body.appendChild(btn);
+}
+
 function gameLoop() {
+  if (gameOver) return;
   requestAnimationFrame(gameLoop);
 
-  if (++count < 4) return;
+  // 속도 조절: count < 8로 변경 (더 느리게)
+  if (++count < 8) return;
   count = 0;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -43,15 +58,15 @@ function gameLoop() {
     head.x < 0 || head.x >= canvas.width ||
     head.y < 0 || head.y >= canvas.height
   ) {
-    alert('Game Over! 점수: ' + score);
-    document.location.reload();
+    endGame();
+    return;
   }
 
   // 자기 몸 충돌 체크
   for (let i = 1; i < snake.length; i++) {
     if (head.x === snake[i].x && head.y === snake[i].y) {
-      alert('Game Over! 점수: ' + score);
-      document.location.reload();
+      endGame();
+      return;
     }
   }
 
@@ -69,8 +84,31 @@ function gameLoop() {
   ctx.fillText('Score: ' + score, 10, 20);
 }
 
+function endGame() {
+  gameOver = true;
+  ctx.fillStyle = 'yellow';
+  ctx.font = '32px Arial';
+  ctx.fillText('Game Over!', 110, 200);
+  ctx.font = '20px Arial';
+  ctx.fillText('점수: ' + score, 160, 240);
+  showRestartButton();
+}
+
+function restartGame() {
+  snake = [{ x: 160, y: 160 }];
+  dx = grid;
+  dy = 0;
+  score = 0;
+  resetFood();
+  gameOver = false;
+  count = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  gameLoop();
+}
+
 // 방향키 이벤트
 document.addEventListener('keydown', e => {
+  if (gameOver) return;
   if (e.key === 'ArrowLeft' && dx === 0) {
     dx = -grid; dy = 0;
   } else if (e.key === 'ArrowUp' && dy === 0) {
